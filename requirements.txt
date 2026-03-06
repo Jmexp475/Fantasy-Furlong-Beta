@@ -1,0 +1,10 @@
+ttkbootstrap
+openpyxl
+python-dateutil
+requests
+python-dotenv
+fastapi
+uvicorn
+tzdata
+portalocker
+python-multipart

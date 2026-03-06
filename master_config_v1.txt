@@ -1,0 +1,35 @@
+{
+  "id": "master_config_v1",
+  "timezone": "Europe/London",
+  "internal_dp": 6,
+  "display_dp": 2,
+  "odds": {
+    "no_default_odds_1_0": true,
+    "place_divisor": 4,
+    "win_multiplier": {"type": "sqrt"},
+    "place_multiplier": {"type": "sqrt"}
+  },
+  "scoring": {
+    "base_points": {"win": 10, "place": 6},
+    "powers": {"win": 1.0, "place": 1.0},
+    "dnf_penalty": {"points": -2, "multiplied": false},
+    "rounding": {"mode": "half_up", "dp": 2}
+  },
+  "paid_places": [
+    {"min": 1, "max": 4, "places": 1},
+    {"min": 5, "max": 7, "places": 2},
+    {"min": 8, "max": 99, "places": 3}
+  ],
+  "settlement": {
+    "allow_one_rescore": true,
+    "max_rescore_count": 1
+  },
+  "admin_panels": [
+    "missing_odds_queue",
+    "manual_odds_entry",
+    "race_lock_override",
+    "result_override",
+    "force_rescore",
+    "audit_log"
+  ]
+}

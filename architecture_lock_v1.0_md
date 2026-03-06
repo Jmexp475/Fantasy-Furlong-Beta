@@ -1,0 +1,14 @@
+# FANTASY FURLONG — ARCHITECTURE LOCK (v1.0)
+
+Status: Locked  
+Scope: Backend architecture, data flow, polling logic, database schema, API contracts  
+UI intentionally excluded from this document.
+
+- Phones never call Racing API directly.
+- Worker is the only Racing API client.
+- Web server reads/writes Postgres.
+- UTC storage/comparison for all times.
+- Idempotent scoring and settlement.
+- Server-side pick locking by off_time.
+- Snapshot odds freeze at 09:00.
+- Leaderboard polling max every 15s.

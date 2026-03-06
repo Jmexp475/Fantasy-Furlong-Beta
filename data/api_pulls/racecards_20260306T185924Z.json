@@ -1,0 +1,29 @@
+{
+  "meeting": {
+    "meeting_id": "meet_2026-03-07_exeter",
+    "name": "Exeter API",
+    "course": "Exeter",
+    "date_local": "2026-03-07",
+    "timezone": "Europe/London",
+    "races": [],
+    "players": [],
+    "status": "empty",
+    "snapshot_id": "odds_2026-03-07_0900",
+    "source": "api"
+  },
+  "odds_snapshot": {
+    "snapshot_id": "odds_2026-03-07_0900",
+    "meeting_id": "meet_2026-03-07_exeter",
+    "captured_at_utc": "2026-03-06T18:59:24.687449+00:00",
+    "races": []
+  },
+  "picks": [],
+  "score_breakdowns": [],
+  "leaderboard": [],
+  "api_meta": {
+    "course_id": "crs_364",
+    "course_name": "Exeter",
+    "date_local": "2026-03-07",
+    "timezone": "Europe/London"
+  }
+}

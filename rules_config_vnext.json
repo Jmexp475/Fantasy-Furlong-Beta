@@ -1,0 +1,16 @@
+{
+  "version": "vNext",
+  "scoring": {
+    "round_dp": 2,
+    "base_points": {
+      "first": 5,
+      "place": 3
+    },
+    "dnf_penalty": -3
+  },
+  "odds": {
+    "win_multiplier": {"type": "sqrt"},
+    "place_multiplier": {"type": "sqrt"},
+    "place_divisor": 5
+  }
+}

@@ -1,0 +1,104 @@
+[
+  {
+    "id": "u_you",
+    "displayName": "You",
+    "isAdmin": true,
+    "avatar": "Y"
+  },
+  {
+    "id": "u_p1",
+    "displayName": "Player 1",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p2",
+    "displayName": "Player 2",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p3",
+    "displayName": "Player 3",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p4",
+    "displayName": "Player 4",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p5",
+    "displayName": "Player 5",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p6",
+    "displayName": "Player 6",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p7",
+    "displayName": "Player 7",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p8",
+    "displayName": "Player 8",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p9",
+    "displayName": "Player 9",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p10",
+    "displayName": "Player 10",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p11",
+    "displayName": "Player 11",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p12",
+    "displayName": "Player 12",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p13",
+    "displayName": "Player 13",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_p14",
+    "displayName": "Player 14",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_1772822606506",
+    "displayName": "Player",
+    "isAdmin": false,
+    "avatar": "P"
+  },
+  {
+    "id": "u_1772834140246",
+    "displayName": "Jamie",
+    "isAdmin": false,
+    "avatar": "J"
+  }
+]

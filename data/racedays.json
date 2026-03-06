@@ -1,0 +1,32 @@
+{
+  "raceDays": [
+    {
+      "course": "Ayr",
+      "date": "2026-03-07"
+    },
+    {
+      "course": "Warwick",
+      "date": "2026-03-08"
+    },
+    {
+      "course": "",
+      "date": ""
+    },
+    {
+      "course": "",
+      "date": ""
+    },
+    {
+      "course": "",
+      "date": ""
+    },
+    {
+      "course": "",
+      "date": ""
+    },
+    {
+      "course": "",
+      "date": ""
+    }
+  ]
+}

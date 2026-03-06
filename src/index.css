@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ff-bg: #F8F7F2;
+  --ff-surface: #FFFFFF;
+  --ff-surface-soft: #F3EFE8;
+  --ff-primary: #6F3CC8;
+  --ff-primary-dark: #56309A;
+  --ff-primary-light: #9B6BE8;
+  --ff-primary-soft: #EDE4F8;
+  --ff-gold: #E8C84E;
+  --ff-gold-soft: #F4E8B2;
+  --ff-text: #4E2A84;
+  --ff-text-muted: #7B67A6;
+  --ff-error-bg: #F6DEDE;
+  --ff-error-text: #C04A62;
+  --ff-border: #E6DED6;
+  --ff-nav-bg: #FBF8F4;
+  --ff-shadow: rgba(91, 45, 163, 0.12);
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  background: var(--ff-bg);
+  color: var(--ff-text);
+  font-family: Inter, system-ui, Arial, sans-serif;
+}
+
+body { background: var(--ff-bg); }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Global palette remap for existing Tailwind utility usage */
+.bg-green-900 { background-color: var(--ff-primary-dark) !important; }
+.bg-green-800, .bg-green-700 { background-color: var(--ff-primary) !important; }
+.bg-green-50, .bg-green-100 { background-color: var(--ff-primary-soft) !important; }
+.text-green-900 { color: var(--ff-text) !important; }
+.text-green-700, .text-green-800 { color: var(--ff-primary) !important; }
+.text-green-400, .text-green-300, .text-green-200 { color: var(--ff-text-muted) !important; }
+.border-green-700, .border-green-100 { border-color: var(--ff-border) !important; }
+.bg-yellow-400 { background-color: var(--ff-gold) !important; }
+.text-yellow-400, .text-yellow-300 { color: var(--ff-gold) !important; }
+.bg-yellow-50 { background-color: var(--ff-gold-soft) !important; }
+.border-yellow-100 { border-color: #EBDD96 !important; }
+.bg-gray-50 { background-color: var(--ff-surface-soft) !important; }
+.text-gray-500, .text-gray-400 { color: var(--ff-text-muted) !important; }
+.border-gray-100, .border-gray-200 { border-color: var(--ff-border) !important; }
+.bg-gray-200 { background-color: #E9E2F3 !important; }
