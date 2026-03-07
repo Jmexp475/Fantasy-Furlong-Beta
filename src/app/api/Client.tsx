@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { AppData, LeaderboardEntry, Meeting, Pick, Race, User } from "./types";
+import type { AppData, LeaderboardEntry, Meeting, Pick, Race, User } from "./Types";
 
 type AppDataApi = AppData & {
   savePick: (raceId: string, runnerId: string) => Promise<void>;

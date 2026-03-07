@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Clock, Flag, AlertCircle } from "lucide-react";
-import { SilkIcon } from "../components/SilkIcon";
-import { ApiNotice } from "../components/ApiNotice";
+import { SilkIcon } from "../components/Silkicon";
+import { ApiNotice } from "../components/Apinotice";
 import { useAppData } from "../api/Client";
 import { ffTheme } from "../../theme";
 

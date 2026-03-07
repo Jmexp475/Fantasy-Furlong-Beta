@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, EyeOff } from "lucide-react";
-import { ApiNotice } from "../components/ApiNotice";
-import { SilkIcon } from "../components/SilkIcon";
+import { ApiNotice } from "../components/Apinotice";
+import { SilkIcon } from "../components/Silkicon";
 import { useAppData } from "../api/Client";
-import type { Race } from "../api/types";
+import type { Race } from "../api/Types";
 
 function offTimeToMinutes(offTime: string): number { const [h,m]=offTime.split(":").map(Number); return h*60+m; }
 const nowMins = () => new Date().getUTCHours() * 60 + new Date().getUTCMinutes();

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
-import { SilkIcon } from "../components/SilkIcon";
-import { ApiNotice } from "../components/ApiNotice";
+import { SilkIcon } from "../components/Silkicon";
+import { ApiNotice } from "../components/Apinotice";
 import { useAppData } from "../api/Client";
 
 function dayLabel(day: { course: string; date: string; label?: string }) {

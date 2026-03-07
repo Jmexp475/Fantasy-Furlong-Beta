@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronUp, Check, Lock } from "lucide-react";
-import { SilkIcon } from "../components/SilkIcon";
-import { ApiNotice } from "../components/ApiNotice";
+import { SilkIcon } from "../components/Silkicon";
+import { ApiNotice } from "../components/Apinotice";
 import { useAppData } from "../api/Client";
-import type { Runner } from "../api/types";
+import type { Runner } from "../api/Types";
 
 function HorseRow({ runner, isPicked, isLocked, onPick }: { runner: Runner; isPicked: boolean; isLocked: boolean; onPick: () => void; }) {
   const [expanded, setExpanded] = useState(false);

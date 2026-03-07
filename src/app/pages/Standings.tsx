@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { ApiNotice } from "../components/ApiNotice";
+import { ApiNotice } from "../components/Apinotice";
 import { useAppData } from "../api/Client";
 
 function dayLabel(day: { course: string; date: string; label?: string }) {
