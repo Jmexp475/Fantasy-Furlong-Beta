@@ -91,3 +91,51 @@ def test_wrong_course_race_is_not_mapped_into_configured_day(monkeypatch):
     }
     _meeting, races = b.STATE._to_frontend_model(session)
     assert races == []
+
+
+def test_users_cleanup_removes_legacy_npc_seed(monkeypatch, tmp_path):
+    web = tmp_path / "web"
+    monkeypatch.setattr(b, "WEB", web)
+    seeded = [
+        {"id": "u_you", "displayName": "You", "isAdmin": True, "avatar": "Y"},
+        {"id": "u_p1", "displayName": "Player 1", "isAdmin": False, "avatar": "P"},
+        {"id": "u_real", "displayName": "Alice", "isAdmin": False, "avatar": "A"},
+    ]
+    _write_json(web / "users.json", seeded)
+
+    users = b.STATE.users()
+    assert users == [{"id": "u_real", "displayName": "Alice", "isAdmin": False, "avatar": "A"}]
+    persisted = b._read_json(web / "users.json", [])
+    assert persisted == users
+
+
+def test_fetch_racecards_allows_future_iso_day_token(monkeypatch):
+    called = {}
+
+    class FakeClient:
+        def __init__(self, username, password):
+            pass
+        def list_courses(self, region_codes=None):
+            return [{"course": "Warwick", "course_id": 99}]
+        def fetch_racecards_standard(self, day, course_ids=None, region_codes=None):
+            called["day"] = day
+            called["course_ids"] = course_ids
+            return {"racecards": []}
+
+    monkeypatch.setattr(b, "TheRacingApiClient", FakeClient)
+    monkeypatch.setattr(b, "find_course_id", lambda courses, name='Warwick': 99)
+    monkeypatch.setattr(
+        b,
+        "adapt_racecards_to_session",
+        lambda racecards_json, target_course_id, target_course_name, target_date_local, timezone, config: {"meeting": {"races": []}},
+    )
+
+    b.STATE.user = "u"
+    b.STATE.password = "p"
+    b.STATE.target_course = "Warwick"
+    b.STATE.course_id = None
+
+    session, cid = b.STATE._fetch_racecards_session("2026-03-11", "Warwick")
+    assert cid == 99
+    assert called["day"] == "2026-03-11"
+    assert session.get("meeting", {}).get("races", []) == []

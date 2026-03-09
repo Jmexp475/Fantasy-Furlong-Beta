@@ -1,11 +1,8 @@
 {
   "raceDays": [
-    { "course": "Warwick", "date": "2026-03-08" },
-    { "course": "Plumpton", "date": "2026-03-09" },
-    { "course": "", "date": "" },
-    { "course": "", "date": "" },
-    { "course": "", "date": "" },
-    { "course": "", "date": "" },
-    { "course": "", "date": "" }
+    { "course": "Cheltenham", "date": "2026-03-10" },
+    { "course": "Cheltenham", "date": "2026-03-11" },
+    { "course": "Cheltenham", "date": "2026-03-12" },
+    { "course": "Cheltenham", "date": "2026-03-13" }
   ]
 }

@@ -28,7 +28,7 @@ from pydantic import BaseModel
 from engine import odds_multiplier, paid_places_for_field_size, recompute_fair_odds_for_race, rescore_session
 from excel_importer import parse_odds_to_decimal, parse_race_header
 from master_config_loader import load_master_config, load_racing_api_credentials
-from storage import ensure_dirs, save_session
+from storage import ensure_dirs, save_session, SESSIONS
 from theracingapi_adapter import adapt_racecards_to_session, apply_results_to_session, find_course_id
 from numeric_utils import safe_float, safe_int
 from theracingapi_client import (
@@ -98,13 +98,10 @@ def _resolve_timezone(name: str):
 def _default_racedays_payload() -> dict[str, Any]:
     return {
         "raceDays": [
-            {"course": "Warwick", "date": "2026-03-08"},
-            {"course": "Wolverhampton", "date": "2026-03-09"},
-            {"course": "", "date": ""},
-            {"course": "", "date": ""},
-            {"course": "", "date": ""},
-            {"course": "", "date": ""},
-            {"course": "", "date": ""},
+            {"course": "Cheltenham", "date": "2026-03-10"},
+            {"course": "Cheltenham", "date": "2026-03-11"},
+            {"course": "Cheltenham", "date": "2026-03-12"},
+            {"course": "Cheltenham", "date": "2026-03-13"},
         ]
     }
 
@@ -408,12 +405,33 @@ class AppState:
             state.setdefault("race_locks", {})[str(race_id)] = bool(locked)
             self._save_admin_state(state)
 
+    def _strip_legacy_npc_users(self, users: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
+        cleaned: list[dict[str, Any]] = []
+        removed = 0
+        for row in users:
+            uid = str(row.get("id", "")).strip()
+            name = str(row.get("displayName", "")).strip()
+            avatar = str(row.get("avatar", "")).strip()
+            is_admin = bool(row.get("isAdmin", False))
+            # Remove legacy scaffold NPCs that were previously auto-seeded as
+            # `u_you` + `u_p1..u_p14` / `Player 1..14`.
+            is_legacy_seed_id = uid == "u_you" or (uid.startswith("u_p") and uid[3:].isdigit())
+            is_legacy_seed_name = name.lower() == "you" or (name.lower().startswith("player ") and name[7:].strip().isdigit())
+            if is_legacy_seed_id and (is_legacy_seed_name or avatar in {"P", "Y"} or (uid == "u_you" and is_admin)):
+                removed += 1
+                continue
+            cleaned.append(row)
+        return cleaned, removed
+
     def users(self) -> list[dict[str, Any]]:
         users = _read_json(self.users_path, [])
-        if isinstance(users, list):
-            return users
-        _write_json(self.users_path, [])
-        return []
+        if not isinstance(users, list):
+            _write_json(self.users_path, [])
+            return []
+        cleaned, removed = self._strip_legacy_npc_users(users)
+        if removed:
+            _write_json(self.users_path, cleaned)
+        return cleaned
 
     def picks(self) -> list[dict[str, Any]]:
         return _read_json(self.picks_path, [])
@@ -457,7 +475,7 @@ class AppState:
         if isinstance(scheduled_off_utc, str):
             try:
                 if _utc_now() >= datetime.fromisoformat(scheduled_off_utc):
-                    raise HTTPException(status_code=409, detail="Race has started; picks are locked")
+                    raise HTTPException(status_code=409, detail="Error: Race Started, Picks are Locked.")
             except ValueError:
                 pass
         items = [p for p in self.picks() if not (p["userId"] == pick.user_id and p["raceId"] == pick.race_id)]
@@ -494,12 +512,14 @@ class AppState:
         now_local = _utc_now().astimezone(self.local_tz).date()
         req = date.fromisoformat(local_date)
         if req == now_local:
-            day = "today"
+            day_token = "today"
         elif req == now_local + timedelta(days=1):
-            day = "tomorrow"
+            day_token = "tomorrow"
         else:
-            raise HTTPException(status_code=400, detail="date must be local today or tomorrow for racecards API")
-        racecards = client.fetch_racecards_standard(day=day, course_ids=[course_id], region_codes=["gb"])
+            # Allow direct ISO date lookups so future configured festival days can
+            # load as soon as the vendor publishes racecards.
+            day_token = local_date
+        racecards = client.fetch_racecards_standard(day=day_token, course_ids=[course_id], region_codes=["gb"])
         session = adapt_racecards_to_session(
             racecards_json=racecards,
             target_course_id=course_id,
@@ -509,6 +529,22 @@ class AppState:
             config=self.config,
         )
         return session, course_id
+
+
+
+    def _load_persisted_session_candidates(self) -> list[dict[str, Any]]:
+        sessions: list[dict[str, Any]] = []
+        if not SESSIONS.exists():
+            return sessions
+        files = sorted(SESSIONS.glob('*.json'), key=lambda f: f.stat().st_mtime, reverse=True)
+        for fp in files:
+            try:
+                payload = json.loads(fp.read_text(encoding='utf-8'))
+            except Exception:
+                continue
+            if isinstance(payload, dict) and isinstance(payload.get('meeting'), dict):
+                sessions.append(payload)
+        return sessions
 
     def refresh_once(self, force: bool, mode: str = "full") -> dict[str, Any]:
         if not (self.user and self.password):
@@ -533,6 +569,30 @@ class AppState:
             sessions: list[dict[str, Any]] = []
             all_results: list[dict[str, Any]] = []
             today_local = _utc_now().astimezone(self.local_tz).date()
+            persisted_candidates = self._load_persisted_session_candidates()
+            persisted_races: list[dict[str, Any]] = []
+            for prev in persisted_candidates:
+                for race in prev.get("meeting", {}).get("races", []):
+                    if isinstance(race, dict):
+                        persisted_races.append(deepcopy(race))
+
+            def _persisted_for_day(slot: int, course: str, local_day: str) -> list[dict[str, Any]]:
+                out: list[dict[str, Any]] = []
+                seen: set[str] = set()
+                for race in persisted_races:
+                    if (safe_int(race.get("_ff_slot")) or -1) != slot:
+                        continue
+                    if str(race.get("_ff_course", "")).strip().lower() != course.strip().lower():
+                        continue
+                    if str(race.get("_ff_date", "")).strip() != local_day:
+                        continue
+                    rid = str(race.get("race_id", "")).strip()
+                    if rid and rid in seen:
+                        continue
+                    if rid:
+                        seen.add(rid)
+                    out.append(deepcopy(race))
+                return out
 
             for row in self.configured_race_days:
                 slot = safe_int(row.get("slot", len(day_states) + 1)) or (len(day_states) + 1)
@@ -558,31 +618,45 @@ class AppState:
                     day_states.append(state)
                     continue
 
-                if req_day in {today_local, today_local + timedelta(days=1)}:
-                    try:
-                        session, course_id = self._fetch_racecards_session(local_day, course)
-                        for race in session.get("meeting", {}).get("races", []):
-                            race["_ff_day_index"] = slot - 1
-                            race["_ff_course"] = course
-                            race["_ff_date"] = local_day
-                            race["_ff_slot"] = slot
-                        sessions.append(session)
-                        fetched["racecards"] += len(session.get("meeting", {}).get("races", []))
+                existing_day_races = _persisted_for_day(slot, course, local_day)
 
-                        day_results: list[dict[str, Any]] = []
-                        if local_day <= today_local.isoformat():
-                            try:
-                                client = TheRacingApiClient(self.user, self.password)
-                                day_results = client.fetch_results(start_date=local_day, end_date=local_day, course=[course_id])
-                                fetched["results"] += len(day_results)
-                            except TheRacingApiRequestError as exc:
-                                if exc.status_code != 422:
-                                    raise
-                        apply_results_to_session(session, day_results, self.config)
-                        all_results.extend(day_results)
+                try:
+                    session, course_id = self._fetch_racecards_session(local_day, course)
+                    for race in session.get("meeting", {}).get("races", []):
+                        race["_ff_day_index"] = slot - 1
+                        race["_ff_course"] = course
+                        race["_ff_date"] = local_day
+                        race["_ff_slot"] = slot
+                    sessions.append(session)
+                    fetched["racecards"] += len(session.get("meeting", {}).get("races", []))
+
+                    day_results: list[dict[str, Any]] = []
+                    if local_day <= today_local.isoformat():
+                        try:
+                            client = TheRacingApiClient(self.user, self.password)
+                            day_results = client.fetch_results(start_date=local_day, end_date=local_day, course=[course_id])
+                            fetched["results"] += len(day_results)
+                        except TheRacingApiRequestError as exc:
+                            if exc.status_code != 422:
+                                raise
+                    apply_results_to_session(session, day_results, self.config)
+                    all_results.extend(day_results)
+                    state["status"] = "loaded"
+                    state["last_refresh"] = now_iso
+                    state["next_check_utc"] = (_utc_now() + timedelta(seconds=self.refresh_seconds)).isoformat()
+                    state["races"] = [
+                        {
+                            "id": str(r.get("race_id", "")),
+                            "off_time": r.get("off_time_local", ""),
+                            "name": r.get("name", ""),
+                            "status": str(r.get("status", "open")),
+                        }
+                        for r in session.get("meeting", {}).get("races", [])
+                    ]
+                except Exception as exc:
+                    if existing_day_races:
                         state["status"] = "loaded"
-                        state["last_refresh"] = now_iso
-                        state["next_check_utc"] = (_utc_now() + timedelta(seconds=self.refresh_seconds)).isoformat()
+                        state["last_error"] = f"{exc} (showing last stored data)"
                         state["races"] = [
                             {
                                 "id": str(r.get("race_id", "")),
@@ -590,13 +664,13 @@ class AppState:
                                 "name": r.get("name", ""),
                                 "status": str(r.get("status", "open")),
                             }
-                            for r in session.get("meeting", {}).get("races", [])
+                            for r in existing_day_races
                         ]
-                    except Exception as exc:
+                    else:
                         state["status"] = "error"
                         state["last_error"] = str(exc)
-                        state["next_check_utc"] = (_utc_now() + timedelta(seconds=self.refresh_seconds)).isoformat()
-                        errors.append(f"slot {slot}: {exc}")
+                    state["next_check_utc"] = (_utc_now() + timedelta(seconds=self.refresh_seconds)).isoformat()
+                    errors.append(f"slot {slot}: {exc}")
                 day_states.append(state)
 
             self.race_day_states = [
@@ -604,16 +678,28 @@ class AppState:
                 for d in sorted(day_states, key=lambda d: safe_int(d.get("slot", 9999)) or 9999)
             ]
 
-            combined = {"meeting": {"races": []}}
-            if sessions:
-                combined = deepcopy(sessions[0])
-                combined_meeting = combined.setdefault("meeting", {})
-                combined_races = []
-                for ses in sessions:
-                    combined_races.extend(ses.get("meeting", {}).get("races", []))
-                combined_meeting["races"] = combined_races
+            combined = deepcopy(persisted_candidates[0]) if persisted_candidates else {"meeting": {"races": []}}
+            combined_meeting = combined.setdefault("meeting", {})
+            if not combined_meeting.get("meeting_id"):
+                combined_meeting["meeting_id"] = "festival_current"
+            combined_meeting.setdefault("course", self.target_course)
+            combined_meeting.setdefault("source", "api")
+            merged_races: dict[str, dict[str, Any]] = {}
+            for race in persisted_races:
+                rid = str(race.get("race_id", "")).strip()
+                if rid:
+                    merged_races[rid] = deepcopy(race)
+            for ses in sessions:
+                for race in ses.get("meeting", {}).get("races", []):
+                    rid = str(race.get("race_id", "")).strip()
+                    if rid:
+                        merged_races[rid] = deepcopy(race)
+            combined_meeting["races"] = sorted(merged_races.values(), key=lambda r: r.get("scheduled_off_dt_utc", ""))
+
+            if combined_meeting.get("races"):
                 self._apply_dynamic_cache_ttls(combined)
                 save_session(combined)
+            if sessions:
                 stamp = _utc_now().strftime("%Y%m%dT%H%M%SZ")
                 _write_json(API_PULLS / f"racecards_{stamp}.json", combined)
                 _write_json(API_PULLS / f"results_{stamp}.json", all_results)

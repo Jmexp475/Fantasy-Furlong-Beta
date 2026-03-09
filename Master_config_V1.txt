@@ -10,10 +10,10 @@
     "place_multiplier": {"type": "sqrt"}
   },
   "scoring": {
-    "base_points": {"win": 10, "place": 6},
+    "base_points": {"win": 5, "place": 3},
     "powers": {"win": 1.0, "place": 1.0},
-    "dnf_penalty": {"points": -2, "multiplied": false},
-    "rounding": {"mode": "half_up", "dp": 2}
+    "dnf_penalty": {"points": -5, "multiplied": false},
+    "rounding": {"mode": "half_up", "dp": 0}
   },
   "paid_places": [
     {"min": 1, "max": 4, "places": 1},

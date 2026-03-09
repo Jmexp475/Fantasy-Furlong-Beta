@@ -6,9 +6,24 @@ import { ApiNotice } from "../components/Apinotice";
 import { useAppData } from "../api/Client";
 import type { Runner } from "../api/Types";
 
+function pendingEtaText(day: any, refreshSeconds = 60): string {
+  const nextRaw = day?.next_check_utc;
+  if (nextRaw) {
+    const nextMs = Date.parse(nextRaw);
+    if (!Number.isNaN(nextMs)) {
+      const mins = Math.max(1, Math.round((nextMs - Date.now()) / 60000));
+      return `Racecard not available yet. Next check in about ${mins} minute${mins === 1 ? "" : "s"}.`;
+    }
+  }
+  const mins = Math.max(1, Math.round((refreshSeconds || 60) / 60));
+  return `Racecard not available yet. Next check in about ${mins} minute${mins === 1 ? "" : "s"}.`;
+}
+
 function HorseRow({ runner, isPicked, isLocked, onPick }: { runner: Runner; isPicked: boolean; isLocked: boolean; onPick: () => void; }) {
   const [expanded, setExpanded] = useState(false);
   const quotes = runner.quotes?.length ? runner.quotes : (runner.quote ? [runner.quote] : []);
+  const jockeyText = runner.jockey?.trim() || "—";
+  const showNumberWithJockey = Boolean(runner.jockey?.trim() && runner.draw);
 
   return (
     <div className={`border-b border-gray-100 last:border-0 ${isPicked ? "bg-green-50" : ""}`}>
@@ -17,7 +32,7 @@ function HorseRow({ runner, isPicked, isLocked, onPick }: { runner: Runner; isPi
           <SilkIcon silkUrl={runner.silkUrl} colors={runner.silkColors} size={28} />
           <div className="text-left flex-1">
             <div className="font-bold text-sm">{runner.horseName}</div>
-            <div className="text-xs text-gray-500">{runner.trainer || "—"} · {runner.jockey || "—"}</div>
+            <div className="text-xs text-gray-500">{runner.trainer || "—"} · {jockeyText}{showNumberWithJockey ? ` • No. ${runner.draw}` : ""}</div>
             <div className="text-[11px] text-green-800">Win: {runner.pointsWin.toFixed(2)} · Place: {runner.pointsPlace.toFixed(2)}</div>
           </div>
           {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -51,10 +66,13 @@ function HorseRow({ runner, isPicked, isLocked, onPick }: { runner: Runner; isPi
 
 export default function Racecard() {
   const [searchParams] = useSearchParams();
-  const { races, currentDayIndex, picks, currentUserId, savePick, apiErrors } = useAppData();
-  const dayRaces = races.filter((r) => r.dayIndex === currentDayIndex).sort((a, b) => a.offTime.localeCompare(b.offTime));
-  const selectedRaceId = searchParams.get("race") ?? dayRaces[0]?.id;
-  const activeRace = dayRaces.find((r) => r.id === selectedRaceId) ?? dayRaces[0];
+  const { meeting, races, currentDayIndex, picks, currentUserId, savePick, apiErrors } = useAppData();
+  const selectedRaceId = searchParams.get("race") || "";
+  const selectedRace = selectedRaceId ? races.find((r) => r.id === selectedRaceId) : undefined;
+  const effectiveDayIndex = selectedRace?.dayIndex ?? currentDayIndex;
+  const dayRaces = races.filter((r) => r.dayIndex === effectiveDayIndex).sort((a, b) => a.offTime.localeCompare(b.offTime));
+  const activeRace = selectedRace ?? dayRaces[0];
+  const selectedDayMeta = meeting?.raceDays?.[effectiveDayIndex];
   const isLocked = !activeRace || activeRace.status !== "declared";
 
   const handlePick = async (runnerId: string) => { if (!activeRace || isLocked) return; await savePick(activeRace.id, runnerId); };
@@ -62,9 +80,11 @@ export default function Racecard() {
   return (
     <div className="p-3 space-y-3">
       <ApiNotice errors={apiErrors} />
+      {!activeRace ? <p className="text-sm text-gray-600">{pendingEtaText(selectedDayMeta, meeting?.refreshIntervalSeconds ?? 60)}</p> : null}
+      {activeRace && activeRace.runners.length === 0 ? <p className="text-sm text-gray-600">{pendingEtaText(selectedDayMeta, meeting?.refreshIntervalSeconds ?? 60)}</p> : null}
       {activeRace && <>
         <div className="px-4 py-3 bg-green-900 text-white"><h2 className="text-sm font-bold">{activeRace.raceName}</h2><p className="text-xs text-green-300">{activeRace.offTime} · {activeRace.distanceMiles} · {activeRace.fieldSize}</p></div>
-        <div className="bg-white">{activeRace.runners.map((runner) => <HorseRow key={runner.id} runner={runner} isPicked={Boolean(picks.find((p) => p.userId === currentUserId && p.raceId === activeRace.id && p.runnerId === runner.id))} isLocked={isLocked} onPick={() => handlePick(runner.id)} />)}</div>
+        <div className="bg-white">{activeRace.runners.map((runner) => <HorseRow key={`${activeRace.id}_${runner.id}`} runner={runner} isPicked={Boolean(picks.find((p) => p.userId === currentUserId && p.raceId === activeRace.id && p.runnerId === runner.id))} isLocked={isLocked} onPick={() => handlePick(runner.id)} />)}</div>
       </>}
     </div>
   );
