@@ -1,8 +1,20 @@
-{
-  "raceDays": [
-    { "course": "Cheltenham", "date": "2026-03-10" },
-    { "course": "Cheltenham", "date": "2026-03-11" },
-    { "course": "Cheltenham", "date": "2026-03-12" },
-    { "course": "Cheltenham", "date": "2026-03-13" }
-  ]
-}
+[
+  {
+    "id": "day1",
+    "name": "Day 1",
+    "course": "Warwick",
+    "date": "2026-03-08"
+  },
+  {
+    "id": "day2",
+    "name": "Day 2",
+    "course": "Plumpton",
+    "date": "2026-03-09"
+  },
+  {
+    "id": "day3",
+    "name": "Day 3",
+    "course": "Sedgefield",
+    "date": "2026-03-10"
+  }
+]
